@@ -1,6 +1,6 @@
 ﻿#include <Windows.h>
 #include<stdio.h>
-#include "PlayerCheat.h"
+#include "Cheat.h"
 #include<iostream>
 using namespace std;
 void check()

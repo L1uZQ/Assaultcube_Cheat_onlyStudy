@@ -1,6 +1,6 @@
 #include <Windows.h>
 #include <math.h>
-#include "PlayerCheat.h"
+#include "Cheat.h"
 
 #define M_PI 3.1415926
 
@@ -15,8 +15,8 @@ float closest_dis = -1.0f;
 float closest_yaw = -1.0f;
 float closest_pitch = -1.0f;
 
-float val_xhead[32];
-float val_yhead[32];
+float eny_X[32];
+float eny_Y[32];
 
 bool is_enemy[32];
 char name[32][16];
@@ -59,8 +59,8 @@ float get_distance(float x, float y) {
 
 void get_eny_info() {
 	// 遍历所有玩家 注意i从1开始
-	memset(val_xhead, 0, sizeof val_xhead);
-	memset(val_yhead, 0, sizeof val_yhead);
+	memset(eny_X, 0, sizeof eny_X);
+	memset(eny_Y, 0, sizeof eny_Y);
 	memset(is_enemy, false, sizeof is_enemy);
 	memset(name, 0, sizeof name);
 	for (int i = 1; i < *character_num; i++) {
@@ -83,12 +83,12 @@ void get_eny_info() {
 			float camY = Windows_Height / 2.0f;
 
 			//转换成敌人在屏幕的坐标
-			float xhead = camX + (camX * clipCoords_X / clipCoords_W);
-			float yhead = camY - (camY * clipCoords_Y / clipCoords_W);
+			eny_X[i] = camX + (camX * clipCoords_X / clipCoords_W);
+			eny_Y[i] = camY - (camY * clipCoords_Y / clipCoords_W);
 
 			strcpy_s(name[i], other_character->name);
-			val_xhead[i] = xhead;
-			val_yhead[i] = yhead;
+	/*		eny_X[i] = xhead;
+			eny_Y[i] = yhead;*/
 			if (other_character->team_info == my_character->team_info) {
 				is_enemy[i] = false;
 			}
@@ -255,26 +255,31 @@ void InitWindow() {
 void Paint_border()
 {
 	HBITMAP graph = CreateCompatibleBitmap(hDestDC, Windows_Width, Windows_Height);
-	//SelectObject(paintDC, graph);
-	HGDIOBJ oldbitmap = SelectObject(paintDC, graph);
+	SelectObject(paintDC, graph);
+	//HGDIOBJ oldbitmap = SelectObject(paintDC, graph);
 	BitBlt(paintDC, 0, 0, Windows_Width, Windows_Height, 0, 0, 0, WHITENESS);
 	for (int i = 1; i < (*character_num); i++) {
 
 		SelectObject(paintDC, GetStockObject(DC_PEN));
 		is_enemy[i] ? SetDCPenColor(paintDC, rgbRed) : SetDCPenColor(paintDC, rgbGreen);
 
-		//因为我们之前算的是按人物下脚下的坐标映射，需要进行左右上下的转换
-		//WINGDIAPI BOOL WINAPI Ellipse(_In_ HDC hdc, _In_ int left, _In_ int top, _In_ int right, _In_ int bottom);
-		Ellipse(paintDC, val_xhead[i]- Windows_Width/30, val_yhead[i] - Windows_Height/7, val_xhead[i] + Windows_Width / 30, val_yhead[i]);
-
 		if (is_enemy[i]) { //如果是敌人，为其绘制边框
+			SetDCPenColor(paintDC, 0x00800080);
 			SetTextColor(paintDC, 0x00800080);
-		}
-		const COLORREF rgbRed = 0x000000FF;
-		//is_enemy[i] ? SetTextColor(paintDC, rgbRed) : SetTextColor(paintDC, rgbGreen);
 
-		SelectObject(paintDC, font);
-		TextOutA(paintDC, val_xhead[i], val_yhead[i], name[i], strlen(name[i]));
+			//WINGDIAPI BOOL WINAPI Ellipse(_In_ HDC hdc, _In_ int left, _In_ int top, _In_ int right, _In_ int bottom);
+			//这里发现我之前找的是人物下脚下的坐标，头部应该还有一个地方没找，需要进行左右上下的转换
+			// 因此这里就直接用一个进行变换了 ，将eny_X[i]、eny_Y[i]这一个点进行上下左右的扩展
+			int left = eny_X[i] - Windows_Width / 30, top = eny_Y[i] - Windows_Height / 7;
+			int right = eny_X[i] + Windows_Width / 30, bottom = eny_Y[i];
+
+			Ellipse(paintDC, left , top, right, bottom);
+			//Ellipse(paintDC, eny_X[i] - Windows_Width / 30, eny_Y[i] - Windows_Height / 7, eny_X[i] + Windows_Width / 30, eny_Y[i]);
+			SelectObject(paintDC, font);
+			TextOutA(paintDC, eny_X[i], eny_Y[i], name[i], strlen(name[i]));
+		}
+
+		const COLORREF rgbRed = 0x000000FF;
 	}
 	BitBlt(hDestDC, 0, 0, Windows_Width, Windows_Width, paintDC, 0, 0, SRCCOPY);
 	DeleteObject(graph);

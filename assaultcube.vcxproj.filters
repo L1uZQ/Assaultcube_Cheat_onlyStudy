@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="PlayerCheat.h">
+    <ClInclude Include="Cheat.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -23,7 +23,7 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="PlayerCheat.cpp">
+    <ClCompile Include="Cheat.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
