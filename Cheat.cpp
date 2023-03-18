@@ -11,9 +11,9 @@ int* character_num;
 Character_info* my_character;
 P_Matrix* p_matrix;
 
-float closest_dis = -1.0f;
-float closest_yaw = -1.0f;
-float closest_pitch = -1.0f;
+float current_evy_dis = -1.0f;
+float dif_d_angle = -1.0f;
+float dif_p_angle = -1.0f;
 
 float eny_X[32];
 float eny_Y[32];
@@ -116,19 +116,19 @@ bool WorldToScreen(Character_info* character) {
 	//敌人在屏幕的坐标
 	float eny_X = (cen_X * screenX / screenW);
 	float eny_Y = (cen_Y * screenY / screenW);
-	closest_dis = get_distance(eny_X, eny_Y);
+	current_evy_dis = get_distance(eny_X, eny_Y);
 	return true;
 }
 
 
 void AutoAim() {
 	//初始化
-	closest_yaw = 0.0f;
-	closest_pitch = 0.0f;
+	dif_d_angle = 0.0f;
+	dif_p_angle = 0.0f;
 
 	//敌人距离准星的距离
-	closest_dis = -1.0f;
-	float current_dis = -1.0f;
+	current_evy_dis = -1.0f;
+	float min_dis = -1.0f;
 
 	// 遍历所有玩家 找到距离屏幕准星最近的敌人 注意i从1开始
 	for (int i = 1; i < *character_num; i++) {
@@ -141,31 +141,32 @@ void AutoAim() {
 
 			float abspos_x = target->x - my_character->x;
 			float abspos_y = target->y - my_character->y;
-			float abspos_z = target->z + 0.3 - my_character->z;	//加0.3是为了更好瞄准头部
+			//float abspos_z = target->z + 0.3 - my_character->z;	//加0.3是为了更好瞄准头部
+			float abspos_z = target->z  - my_character->z;	//加0.3是为了更好瞄准头部
 			float Horizontal_distance = get_distance(abspos_x, abspos_y);	//2D平面距离
-			// 如果当前敌人离准星最近，计算偏航角和偏仰角
-			if (current_dis == -1.0f || closest_dis < current_dis) {
-				current_dis = closest_dis;
+			// 计算俯仰角和偏转角
+			if (min_dis == -1.0f || current_evy_dis < min_dis) {
+				min_dis = current_evy_dis;
 				// 计算yaw
-				float azimuth_xy = atan2f(abspos_y, abspos_x);
+				float alpha = atan2f(abspos_y, abspos_x);
 				// 转换成角度制
-				float yaw = (float)(azimuth_xy * (180.0 / M_PI));
+				dif_d_angle = (float)(alpha * (180.0 / M_PI)) + 90;
 				// 需要加90度 因为玩家的起始yaw就是90°
-				closest_yaw = yaw + 90;
+				//closest_yaw = yaw + 90;
 
 				// 计算pitch
-				float azimuth_z = atan2f(abspos_z, Horizontal_distance);
+				float beta = atan2f(abspos_z, Horizontal_distance);
 				// 转换成角度制
-				closest_pitch = (float)(azimuth_z * (180.0 / M_PI));
+				dif_p_angle = (float)(beta * (180.0 / M_PI));
 			}
 		}
 	}
 
 	// 将准星移到最近的敌人处
-	if (current_dis != -1.0f) {
+	if (min_dis != -1.0f) {
 		//UpdateAim();
-		my_character->yaw = closest_yaw;
-		my_character->pitch = closest_pitch;
+		my_character->yaw = dif_d_angle;
+		my_character->pitch = dif_p_angle;
 	}
 }
 
