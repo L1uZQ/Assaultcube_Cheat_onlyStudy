@@ -27,20 +27,19 @@ struct P_Matrix {  //投影矩阵
 //把没用的补全，只需要定义我们要使用的那几个变量
 struct Character_info {
 	//char unknown1[4];
-	char unknown1[0x28];
+	char meaningless_a[0x28];
 	float x; 
 	float y; 
 	float z; 
-	float yaw;
-	float pitch;
-	char unknown3[0x1C9];
+	float d_angle;
+	float p_angle;
+	char meaningless_b[0x1C9];
 	char name[16];
-	char unknown4[0xF7];
+	char meaningless_c[0xF7];
 	int team_info;  //找到的玩家的阵营信息
-	char unknown5[0x8];
-	int is_dead;  //存活状态
+	char meaningless_d[0x8];
+	int is_dead;  //描述存活状态的信息
 };
-
 
 
 void Paint_border();
@@ -58,6 +57,6 @@ bool WorldToScreen(Character_info* character);
 
 void get_eny_info();   //通过遍历获取全部对局玩家的信息，并得到映射后的坐标
 
-void AutoAim();
+void Self_Aiming();
 
 void UpdateAim();

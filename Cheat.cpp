@@ -121,53 +121,48 @@ bool WorldToScreen(Character_info* character) {
 }
 
 
-void AutoAim() {
+void Self_Aiming() {
+	
 	//初始化
-	dif_d_angle = 0.0f;
-	dif_p_angle = 0.0f;
+	const float PI = 3.1415926;
+	dif_d_angle = 0.0;
+	dif_p_angle = 0.0;
+	float min_dis = 9999; //先初始化一个min_dis,后面根据计算的值进行更新
 
-	//敌人距离准星的距离
-	//current_evy_dis = -1.0f;
-	//float min_dis = -1.0f;
-	float min_dis = 9999;
-
-	// 遍历所有玩家 找到距离屏幕准星最近的敌人 注意i从1开始
+	// 遍历玩家列表，找到需要我们调整视角最小的敌人并锁定
 	for (int i = 1; i < *character_num; i++) {
+		//获取之前找到的人物信息和任务列表的偏移
 		DWORD* now_character_offset = (DWORD*)(*character_list + (i * 4));
 		Character_info* other_character = (Character_info*)(*now_character_offset);
 
-		// 保证敌人存活且在视角范围内
-		if (my_character != NULL && other_character != NULL && my_character->team_info != other_character->team_info && !other_character->is_dead && p_matrix != NULL
-			&& WorldToScreen(other_character)) {
-
-			float abspos_x = other_character->x - my_character->x;
-			float abspos_y = other_character->y - my_character->y;
-			//float abspos_z = target->z + 0.3 - my_character->z;	//加0.3是为了更好瞄准头部
-			float abspos_z = other_character->z  - my_character->z;	
-			float sq_distance = get_distance(abspos_x, abspos_y);	
+		if (my_character  && other_character  && my_character->team_info != other_character->team_info && !other_character->is_dead && p_matrix && WorldToScreen(other_character)) {
+			//根据坐标计算距离
+			float current_eny_x = other_character->x - my_character->x;
+			float current_eny_y = other_character->y - my_character->y;
+			float current_eny_z = other_character->z  - my_character->z;	
+			float sq_distance = get_distance(current_eny_x, current_eny_y);	
 			
-			// 计算俯仰角和偏转角-1.0f
+			// 计算俯仰角和偏转角
 			if (min_dis == 9999 || current_evy_dis < min_dis) {
-				min_dis = current_evy_dis;
-				// 计算yaw
-				float alpha = atan2f(abspos_y, abspos_x);
-				// 转换成角度制
-				dif_d_angle = (float)(alpha * (180.0 / M_PI)) + 90;
-				// 需要加90度 因为玩家的起始yaw就是90°
+				min_dis = current_evy_dis; 
 
-				// 计算pitch
-				float beta = atan2f(abspos_z, sq_distance);
-				// 转换成角度制
-				dif_p_angle = (float)(beta * (180.0 / M_PI));
+				// 计算需要水平移动的偏转角
+				float alpha = atan2f(current_eny_y, current_eny_x);
+				dif_d_angle = (float)(alpha * (180.0 / PI)) + 90;
+				// 需要加90度，之前不加进游戏发现老是跟正确位置差90，
+				//应该是游戏设置问题
+
+				// 计算需要垂直移动的俯仰角
+				float beta = atan2f(current_eny_z, sq_distance);
+				dif_p_angle = (float)(beta * (180.0 / PI));
 			}
 		}
 	}
 
-	// 将准星移到最近的敌人处
+	// 将准星移到需要锁定的敌人身上
 	if (min_dis != 9999) {
-		//UpdateAim();
-		my_character->yaw = dif_d_angle;
-		my_character->pitch = dif_p_angle;
+		my_character->d_angle = dif_d_angle;
+		my_character->p_angle = dif_p_angle;
 	}
 }
 

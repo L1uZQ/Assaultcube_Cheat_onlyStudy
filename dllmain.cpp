@@ -21,7 +21,7 @@ void check()
 			modeAutoAim = !modeAutoAim;
 		}
 		if (modeAutoAim)
-			AutoAim();
+			Self_Aiming();
 		Sleep(1);
 	}
 }
