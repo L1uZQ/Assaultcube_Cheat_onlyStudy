@@ -2,7 +2,6 @@
 #include <math.h>
 #include "Cheat.h"
 
-#define M_PI 3.1415926
 
 DWORD* character_info_ptr;
 DWORD* character_list;
@@ -11,9 +10,9 @@ int* character_num;
 Character_info* my_character;
 P_Matrix* p_matrix;
 
-float current_evy_dis = -1.0f;
-float dif_d_angle = -1.0f;
-float dif_p_angle = -1.0f;
+float current_evy_dis = 9999;
+float dif_d_angle = 0;
+float dif_p_angle = 0;
 
 float eny_X[32];
 float eny_Y[32];
@@ -31,8 +30,6 @@ RECT window_loc;  //游戏窗口所处的矩形区域
 HDC hDestDC;
 HDC paintDC;
 HFONT font;
-const COLORREF rgbRed = 0x000000FF;
-const COLORREF rgbGreen = 0x0000FF00;
 
 bool modeESP = false;
 bool modeAutoAim = false;
@@ -68,7 +65,6 @@ void get_eny_info() {
 		
 		//遍历人物列表，取出来一个人物
 		Character_info* other_character = (Character_info*)(*now_character_offset);
-		float dis = -1.0f;
 
 		// 保证敌人存活
 		if (my_character  && other_character && p_matrix && ! other_character->is_dead && WorldToScreen(other_character)) {
@@ -79,8 +75,8 @@ void get_eny_info() {
 			float clipCoords_W = (other_character->x * p_matrix->a04) + (other_character->y* p_matrix->a14 ) + (other_character->z*p_matrix->a24 ) + p_matrix->a34;
 
 			//准心在屏幕的位置
-			float camX = Windows_Width / 2.0f;
-			float camY = Windows_Height / 2.0f;
+			float camX = Windows_Width / 2.0;
+			float camY = Windows_Height / 2.0;
 
 			//转换成敌人在屏幕的坐标
 			eny_X[i] = camX + (camX * clipCoords_X / clipCoords_W);
@@ -248,13 +244,10 @@ void Paint_border()
 {
 	HBITMAP graph = CreateCompatibleBitmap(hDestDC, Windows_Width, Windows_Height);
 	SelectObject(paintDC, graph);
-	//HGDIOBJ oldbitmap = SelectObject(paintDC, graph);
 	BitBlt(paintDC, 0, 0, Windows_Width, Windows_Height, 0, 0, 0, WHITENESS);
 	for (int i = 1; i < (*character_num); i++) {
 
 		SelectObject(paintDC, GetStockObject(DC_PEN));
-		is_enemy[i] ? SetDCPenColor(paintDC, rgbRed) : SetDCPenColor(paintDC, rgbGreen);
-
 		if (is_enemy[i]) { //如果是敌人，为其绘制边框
 			SetDCPenColor(paintDC, 0x00800080);
 			SetTextColor(paintDC, 0x00800080);
@@ -266,7 +259,6 @@ void Paint_border()
 			int right = eny_X[i] + Windows_Width / 30, bottom = eny_Y[i];
 
 			Ellipse(paintDC, left , top, right, bottom);
-			//Ellipse(paintDC, eny_X[i] - Windows_Width / 30, eny_Y[i] - Windows_Height / 7, eny_X[i] + Windows_Width / 30, eny_Y[i]);
 			SelectObject(paintDC, font);
 			TextOutA(paintDC, eny_X[i], eny_Y[i], name[i], strlen(name[i]));
 		}

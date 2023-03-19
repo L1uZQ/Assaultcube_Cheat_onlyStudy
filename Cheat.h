@@ -26,7 +26,6 @@ struct P_Matrix {  //投影矩阵
 
 //把没用的补全，只需要定义我们要使用的那几个变量
 struct Character_info {
-	//char unknown1[4];
 	char meaningless_a[0x28];
 	float x; 
 	float y; 
