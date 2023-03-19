@@ -127,35 +127,36 @@ void AutoAim() {
 	dif_p_angle = 0.0f;
 
 	//敌人距离准星的距离
-	current_evy_dis = -1.0f;
-	float min_dis = -1.0f;
+	//current_evy_dis = -1.0f;
+	//float min_dis = -1.0f;
+	float min_dis = 9999;
 
 	// 遍历所有玩家 找到距离屏幕准星最近的敌人 注意i从1开始
 	for (int i = 1; i < *character_num; i++) {
-		DWORD* target_offset = (DWORD*)(*character_list + (i * 4));
-		Character_info* target = (Character_info*)(*target_offset);
+		DWORD* now_character_offset = (DWORD*)(*character_list + (i * 4));
+		Character_info* other_character = (Character_info*)(*now_character_offset);
 
 		// 保证敌人存活且在视角范围内
-		if (my_character != NULL && target != NULL && my_character->team_info != target->team_info && !target->is_dead && p_matrix != NULL
-			&& WorldToScreen(target)) {
+		if (my_character != NULL && other_character != NULL && my_character->team_info != other_character->team_info && !other_character->is_dead && p_matrix != NULL
+			&& WorldToScreen(other_character)) {
 
-			float abspos_x = target->x - my_character->x;
-			float abspos_y = target->y - my_character->y;
+			float abspos_x = other_character->x - my_character->x;
+			float abspos_y = other_character->y - my_character->y;
 			//float abspos_z = target->z + 0.3 - my_character->z;	//加0.3是为了更好瞄准头部
-			float abspos_z = target->z  - my_character->z;	//加0.3是为了更好瞄准头部
-			float Horizontal_distance = get_distance(abspos_x, abspos_y);	//2D平面距离
-			// 计算俯仰角和偏转角
-			if (min_dis == -1.0f || current_evy_dis < min_dis) {
+			float abspos_z = other_character->z  - my_character->z;	
+			float sq_distance = get_distance(abspos_x, abspos_y);	
+			
+			// 计算俯仰角和偏转角-1.0f
+			if (min_dis == 9999 || current_evy_dis < min_dis) {
 				min_dis = current_evy_dis;
 				// 计算yaw
 				float alpha = atan2f(abspos_y, abspos_x);
 				// 转换成角度制
 				dif_d_angle = (float)(alpha * (180.0 / M_PI)) + 90;
 				// 需要加90度 因为玩家的起始yaw就是90°
-				//closest_yaw = yaw + 90;
 
 				// 计算pitch
-				float beta = atan2f(abspos_z, Horizontal_distance);
+				float beta = atan2f(abspos_z, sq_distance);
 				// 转换成角度制
 				dif_p_angle = (float)(beta * (180.0 / M_PI));
 			}
@@ -163,17 +164,12 @@ void AutoAim() {
 	}
 
 	// 将准星移到最近的敌人处
-	if (min_dis != -1.0f) {
+	if (min_dis != 9999) {
 		//UpdateAim();
 		my_character->yaw = dif_d_angle;
 		my_character->pitch = dif_p_angle;
 	}
 }
-
-//void UpdateAim() {
-//
-//
-//}
 
 
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
