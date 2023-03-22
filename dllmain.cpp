@@ -1,36 +1,34 @@
 ﻿#include <Windows.h>
-#include<stdio.h>
 #include "Cheat.h"
 #include<iostream>
 using namespace std;
-void check()
+void run()
 {
 	while (true) {
-		if (GetAsyncKeyState(VK_F1) & 1) {
-			modeESP = !modeESP;
-			if (modeESP == true) {
+		if (GetAsyncKeyState(VK_F6)) {
+			Show_enyBorder = !Show_enyBorder;
+			if (Show_enyBorder == true) {
 				InitWindow();
 			}
 			else {
 				DeleteWindow();
 			}
 		}
-		if (modeESP)
-			get_eny_info();
-		if (GetAsyncKeyState(VK_F2) & 1) {
-			modeAutoAim = !modeAutoAim;
+		if (Show_enyBorder)get_eny_info();
+
+		if (GetAsyncKeyState(VK_F7) ) {
+			Open_self_Aiming = !Open_self_Aiming;
 		}
-		if (modeAutoAim)
-			Self_Aiming();
-		Sleep(1);
+		if (Open_self_Aiming) Self_Aiming();
+
+		Sleep(5);
 	}
 }
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
+bool WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 	if (fdwReason == DLL_PROCESS_ATTACH) {
 		Init();
-		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)check, NULL, 0, NULL);
+		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)run, NULL, 0, NULL);
 	}
-	cout << "111" << endl;
 	return true;
 }

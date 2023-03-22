@@ -10,6 +10,9 @@ int* character_num;
 Character_info* my_character;
 P_Matrix* p_matrix;
 
+bool is_enemy[32];
+char name[32][16];
+
 float current_evy_dis = 9999;
 float dif_d_angle = 0;
 float dif_p_angle = 0;
@@ -17,22 +20,21 @@ float dif_p_angle = 0;
 float eny_X[32];
 float eny_Y[32];
 
-bool is_enemy[32];
-char name[32][16];
-
 //屏幕大小
 int Windows_Width;
 int Windows_Height;
 
+
+HDC hDestDC;
+HDC paintDC;
+HFONT myfont;
 HWND Normal_Window; //游戏运行的窗口
 HWND CheatWindow;  //我们的作弊程序的窗口
 RECT window_loc;  //游戏窗口所处的矩形区域
-HDC hDestDC;
-HDC paintDC;
-HFONT font;
 
-bool modeESP = false;
-bool modeAutoAim = false;
+
+bool Show_enyBorder = false;
+bool Open_self_Aiming = false;
 
 void Init() {
 	//窗口信息
@@ -45,6 +47,7 @@ void Init() {
 	//取偏移处指针的值，然后声明一个Character_info类型的指针，访问人物信息
 	my_character = (Character_info*) (*(DWORD*)character_info_offset);
 
+	//人物列表和任务数量
 	character_list = (DWORD*)character_list_offset;
 	character_num = (int*)character_num_offset;
 }
@@ -70,9 +73,9 @@ void get_eny_info() {
 		if (my_character  && other_character && p_matrix && ! other_character->is_dead && WorldToScreen(other_character)) {
 		
 			//脚部坐标target->x,y,z
-			float clipCoords_X = (other_character->x *(p_matrix->a01) ) + (other_character->y * p_matrix->a11 ) + (other_character->z * p_matrix->a21 ) + p_matrix->a31;
-			float clipCoords_Y = (other_character->x * p_matrix->a02 ) + (other_character->y* p_matrix->a12 ) + (other_character->z* p_matrix->a22 ) + p_matrix->a32;
-			float clipCoords_W = (other_character->x * p_matrix->a04) + (other_character->y* p_matrix->a14 ) + (other_character->z*p_matrix->a24 ) + p_matrix->a34;
+			float clipCoords_X = (other_character->p_x *(p_matrix->a01) ) + (other_character->p_y * p_matrix->a11 ) + (other_character->p_z * p_matrix->a21 ) + p_matrix->a31;
+			float clipCoords_Y = (other_character->p_x * p_matrix->a02 ) + (other_character->p_y* p_matrix->a12 ) + (other_character->p_z* p_matrix->a22 ) + p_matrix->a32;
+			float clipCoords_W = (other_character->p_x * p_matrix->a04) + (other_character->p_y* p_matrix->a14 ) + (other_character->p_z*p_matrix->a24 ) + p_matrix->a34;
 
 			//准心在屏幕的位置
 			float camX = Windows_Width / 2.0;
@@ -98,9 +101,9 @@ void get_eny_info() {
 
 
 bool WorldToScreen(Character_info* character) {
-	float screenX = (character->x* p_matrix->a01 ) + (character->y* p_matrix->a11) + (character->z* p_matrix->a21) + p_matrix->a31;
-	float screenY = (character->x* p_matrix->a02 ) + (character->y* p_matrix->a12) + (character->z* p_matrix->a22) + p_matrix->a32;
-	float screenW = (character->x* p_matrix->a04) + (character->y* p_matrix->a14) + (character->z* p_matrix->a24) + p_matrix->a34;
+	float screenX = (character->p_x* p_matrix->a01 ) + (character->p_y* p_matrix->a11) + (character->p_z* p_matrix->a21) + p_matrix->a31;
+	float screenY = (character->p_x* p_matrix->a02 ) + (character->p_y* p_matrix->a12) + (character->p_z* p_matrix->a22) + p_matrix->a32;
+	float screenW = (character->p_x* p_matrix->a04) + (character->p_y* p_matrix->a14) + (character->p_z* p_matrix->a24) + p_matrix->a34;
 	if (screenW <= (float) 0.1) {
 		return false;
 	}
@@ -133,9 +136,9 @@ void Self_Aiming() {
 
 		if (my_character  && other_character  && my_character->team_info != other_character->team_info && !other_character->is_dead && p_matrix && WorldToScreen(other_character)) {
 			//根据坐标计算距离
-			float current_eny_x = other_character->x - my_character->x;
-			float current_eny_y = other_character->y - my_character->y;
-			float current_eny_z = other_character->z  - my_character->z;	
+			float current_eny_x = other_character->p_x - my_character->p_x;
+			float current_eny_y = other_character->p_y - my_character->p_y;
+			float current_eny_z = other_character->p_z  - my_character->p_z;	
 			float sq_distance = get_distance(current_eny_x, current_eny_y);	
 			
 			// 计算俯仰角和偏转角
@@ -259,7 +262,7 @@ void Paint_border()
 			int right = eny_X[i] + Windows_Width / 30, bottom = eny_Y[i];
 
 			Ellipse(paintDC, left , top, right, bottom);
-			SelectObject(paintDC, font);
+			SelectObject(paintDC, myfont);
 			TextOutA(paintDC, eny_X[i], eny_Y[i], name[i], strlen(name[i]));
 		}
 
